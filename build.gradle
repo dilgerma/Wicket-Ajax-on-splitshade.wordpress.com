@@ -1,0 +1,51 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+defaultTasks "build"
+
+version = "1.0-SNAPSHOT"
+
+springVersion = '3.0.5.RELEASE'
+wicketVersion = '1.5.0'
+jettyVersion = '7.3.0.v20110203'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+ dependencies {
+        compile  "org.apache.wicket:wicket:$wicketVersion"
+        compile  "org.apache.wicket:wicket-extensions:$wicketVersion"
+        compile  "org.apache.wicket:wicket-spring:$wicketVersion"
+        compile  "org.apache.wicket:wicket-datetime:$wicketVersion"
+        compile  'org.slf4j:slf4j-log4j12:1.5.8'
+	compile  "org.springframework:spring-core:$springVersion"
+        compile  "org.springframework:spring-beans:$springVersion"
+        compile  "org.springframework:spring-jdbc:$springVersion"
+        compile  "org.springframework:spring-web:$springVersion"
+        compile  "org.springframework:spring-orm:$springVersion"
+        compile  "org.springframework:spring-test:$springVersion"
+	testCompile     "junit:junit:4.8.1"
+        testCompile     "org.mockito:mockito-core:1.8.5"
+        testCompile "org.eclipse.jetty.aggregate:jetty-all-server:$jettyVersion"
+
+}
+
+ sourceSets {
+        main {
+          resources {
+              srcDir 'src/main/resources'
+              srcDir 'src/main/java'
+          }
+        }
+        test {
+          resources {
+              srcDir 'src/test/resources'
+              srcDir 'src/test/java'
+          }
+        }
+    }
+
+
+repositories {
+    mavenCentral()
+}
