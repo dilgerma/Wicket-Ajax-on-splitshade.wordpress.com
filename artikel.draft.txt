@@ -1,0 +1,214 @@
+Mit Wicket 1.5 ist es so einfach wie nie, Ajax basierte Webapplikationen zu erstellen.
+
+Wie einfach das geht und wieviel Spaß das machen kann will dieser Artikel zeigen.
+
+Zunächst erzeugen wir uns eine sehr einfache Wicket-Applikation:
+
+[code]
+
+mvn archetype generate
+
+[/code]
+
+mit der Nummer 217.
+
+Anschließend passen wir die Version in der pom noch an (im Moment wird über den Maven Archetype die Version 1.5.0 noch nicht angeboten.
+
+Hier ist das Gradle-Build File (es gibt aber auch ein Maven Pom):
+
+[code]
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+defaultTasks "build"
+
+version = "1.0-SNAPSHOT"
+
+springVersion = '3.0.5.RELEASE'
+wicketVersion = '1.5.0'
+jettyVersion = '7.3.0.v20110203'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+dependencies {
+compile  "org.apache.wicket:wicket:$wicketVersion"
+compile  "org.apache.wicket:wicket-extensions:$wicketVersion"
+compile  "org.apache.wicket:wicket-spring:$wicketVersion"
+compile  "org.apache.wicket:wicket-datetime:$wicketVersion"
+compile  'org.slf4j:slf4j-log4j12:1.5.8'
+compile  "org.springframework:spring-core:$springVersion"
+compile  "org.springframework:spring-beans:$springVersion"
+compile  "org.springframework:spring-jdbc:$springVersion"
+compile  "org.springframework:spring-web:$springVersion"
+compile  "org.springframework:spring-orm:$springVersion"
+compile  "org.springframework:spring-test:$springVersion"
+testCompile     "junit:junit:4.8.1"
+testCompile     "org.mockito:mockito-core:1.8.5"
+testCompile "org.eclipse.jetty.aggregate:jetty-all-server:$jettyVersion"
+
+}
+
+sourceSets {
+main {
+resources {
+srcDir 'src/main/resources'
+srcDir 'src/main/java'
+}
+}
+test {
+resources {
+srcDir 'src/test/resources'
+srcDir 'src/test/java'
+}
+}
+}
+
+repositories {
+mavenCentral()
+}
+
+[/code]
+
+Zunächst räumen wir die Applikation noch ein wenig auf, damit wir wirklich "auf der grünen Wiese" anfangen können.
+Die Page sollte so aussehen:
+
+[code language="java"]
+public class HomePage extends WebPage {
+private static final long serialVersionUID = 1L;
+
+public HomePage(final PageParameters parameters) {
+}
+}
+[/code]
+
+Anschließend löschen wir noch die Klasse "TestHomePage" unter src/test/java, Testen kann hier nicht das Thema.
+
+Zunächst mal schauen wir uns grundsätzlich an, wie Wicket im Zusammenspiel mit Ajax überhaupt funktioniert.
+
+Im nächsten Schritt werden wir einige Funktionale Elemente einbauen (TextFelder etc,)
+
+Anschließend werden wir uns die Integration mit der meiner Ansicht nach coolsten Ajax-Engine die aktuell verfügbar ist anschauen.
+
+Anschließend werden wir einen Blick auf den neuen Wicket Event Mechanismus werfen.
+
+Der Source-Code ist übrigens verfügbar, und zwar hier. Alle wichtigen Schritte sind jeweils getaggt. Ich werde im Artikel darauf verweisen.
+
+Im Package "src/test/java" befindet sich übrigens die Klasse Start, diese hat eine main()-Methode und startet einen Embedded-Jetty, d.h. die Applikation ist direkt aus Eclipse heraus startbar.
+
+Schritt 1 - die Wicket Ajax Engine
+
+Wicket ist ein etabliertes Webframework und kommt mit einer schlanken aber brauchbaren Ajax-Engine daher.
+
+Was bietet die Wicket Ajax Engine?
+
+    Abstraktion von Browser-Inkompatibilitäten
+    Abstraktion der Ajax-Requests
+    Parallele / Synchrone Verarbeitung von Ajax-Requests
+
+Betrachten wir doch mal, wie die AjaxEngine grundsätzlich aufgebaut ist. Hierfür fügen wir in die Form einen einfachen AjaxLink ein.
+
+Wicket bietet von Haus aus schon eine ganze Menge an Komponenten, die Ajax-Funktionalität Out-of-the-Box mitbringen. Der Ajax-Link ist eine davon - Ein Link der einen Ajax-Request an den Server sendet.
+
+Folgendes Fragment bauen wir in das Html der Seite ein.
+
+[code language="html"]
+
+<a href="#" wicket:id="ajaxLink"/>
+
+[/code]
+
+Im Java Code das Pendant dazu.
+
+[code language="java"]
+
+add(new AjaxLink("ajaxLink"){
+@Override
+public void onClick(AjaxRequestTarget target) {
+target.appendJavaScript("alert('hello world!');");
+}
+});
+
+[/code]
+
+
+Die Implementierung spielt momentan keine Rolle, dazu kommen wir später noch. Zunächst mal wollen wir uns anschauen, was Wicket uns generiert hat.
+Hierzu betrachten wir den Quellcode der generierten Webseite.
+
+[code language="java"]
+<a href="<a href="view-source:http://localhost:8080/?0#">#</a>" wicket:id="ajaxLink" id="ajaxLink1" onclick="var wcall=wicketAjaxGet('wicket/page?0-1.IBehaviorListener.0-ajaxLink',function() { }.bind(this),function() { }.bind(this), function() {return Wicket.$('ajaxLink1') != null;}.bind(this));return !wcall;">Click me</a>
+[/code]
+
+Besonders interessant ist natürlich der onclick-Handler des Links:
+
+[code language="javascript"]
+var wcall=wicketAjaxGet('wicket/page?0-1.IBehaviorListener.0-ajaxLink',function() { }.bind(this),function() { }.bind(this), function() {return Wicket.$('ajaxLink1') != null;}.bind(this));return !wcall;"
+[/code]
+
+Um zu verstehen, was das bedeutet betrachten wir uns gleichzeitig die Implementierung der entsprechenden Stelle in den Wicket-Sources.
+Die Javascript Implementierung befindet sich im Modul wicket-core in der Datei wicket-ajax.js.
+
+[code language="javascript"]
+function wicketAjaxGet(url, successHandler, failureHandler, precondition, channel) {
+
+var call = new Wicket.Ajax.Call(url, successHandler, failureHandler, channel);
+
+if (typeof(precondition) != "undefined" && precondition != null) {
+call.request.precondition = precondition;
+}
+
+return call.call();
+}
+[/code]
+
+Die wicketAjaxGet-Routine hat also folgende Parameter:
+
+[code language="javascript"]
+url, successHandler, failureHandler, channel
+[/code]
+
+Die Parameter sind folgendermaßen belegt:
+
+[code language="java"]
+url : wicket/page?0-1.IBehaviorListener.0-ajaxLink
+successHandler : function() { }.bind(this)
+failureHandler :function() { }.bind(this)
+channel :function() {return Wicket.$('ajaxLink1') != null;}.bind(this));
+[/code]
+
+Ok, schauen wir uns ein wenig genauer an, wie der Wicket-Ajax-Mechanismus überhaupt funktioniert.
+Die Url wicket/page?0-1.IBehaviorListener.0-ajaxLink adressiert ein AjaxBehavior.
+
+Wicket Behaviors bieten die einfache Möglichkeit, zusätzliches Verhalten für Wicket-Komponenten zu definieren.
+Im folgenden Code-Schnipsel wird das grob veranschaulicht.
+Zunächst definieren wir im Html ein einfaches div-Element zur Anzeige eines Textes.
+
+[code language="html"]
+<div wicket:id="ajaxText"/>
+[/code]
+
+und zusätzlich folgenden Java-Code:
+
+[code language="java"]
+Label label = new Label("ajaxText","Ajax Clickable Text");
+add(label);
+label.add(new AjaxEventBehavior("onclick"){
+
+@Override
+protected void onEvent(AjaxRequestTarget target) {
+target.appendJavaScript("alert('clicked')");
+}});
+[/code]
+
+Auf diese Art und Weise kann praktisch jedes Element ajaxifiziert werden.
+Wie aber kommt man jetzt vom Javascript auf der Clientseite zum Serverseitigen Code?
+
+Ganz einfach, über die URL.
+
+[code language="javascript"]
+wicket/page?0-1.IBehaviorListener.0-ajaxLink
+[/code]
+
+Hiermit wird die PageMap 0 adressiert, in dieser PageMap die Page mit der Version 1. Adressiert wird ein IBehaviorListener, und zwar
+mit der Version 0 das auf der Komponente mit der ID "ajaxLink" liegt.
