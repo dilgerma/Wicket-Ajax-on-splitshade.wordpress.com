@@ -103,9 +103,9 @@ Wicket ist ein etabliertes Webframework und kommt mit einer schlanken aber brauc
 
 Was bietet die Wicket Ajax Engine?
 
-    Abstraktion von Browser-Inkompatibilitäten
-    Abstraktion der Ajax-Requests
-    Parallele / Synchrone Verarbeitung von Ajax-Requests
+Abstraktion von Browser-Inkompatibilitäten
+Abstraktion der Ajax-Requests
+Parallele / Synchrone Verarbeitung von Ajax-Requests
 
 Betrachten wir doch mal, wie die AjaxEngine grundsätzlich aufgebaut ist. Hierfür fügen wir in die Form einen einfachen AjaxLink ein.
 
@@ -131,7 +131,6 @@ target.appendJavaScript("alert('hello world!');");
 });
 
 [/code]
-
 
 Die Implementierung spielt momentan keine Rolle, dazu kommen wir später noch. Zunächst mal wollen wir uns anschauen, was Wicket uns generiert hat.
 Hierzu betrachten wir den Quellcode der generierten Webseite.
@@ -217,7 +216,6 @@ nehmen.
 
 Das Schema einer URL ist in der Klasse URL definiert (natürlch die in den wicket-packages...)
 
-
 Hier wird beispielsweise auch aus dem String IBehaviorListener die entsprechende Klasse erzeugt, das Mapping hierzu findet ihr in der KLasse
 RequestListenerInterface.
 
@@ -243,35 +241,37 @@ channel :function() {return Wicket.$('ajaxLink1') != null;}.bind(this));
 SuccessHandler ist leer, d.h. es gibt keine bestimmte AKtion, wenn der Ajax-Requets erfolgreich ist.
 
 Das Gleiche gilt für den Failure-Handler, sollte der Ajax Request fehlschlagen, dann schlägt der AjaxRequest eben fehl.
-Ich hatte das Problem schon mehrfach in diversen Projekten, dass die Infrastruktur uns einen Strich durch die Rechnung macht - 
+Ich hatte das Problem schon mehrfach in diversen Projekten, dass die Infrastruktur uns einen Strich durch die Rechnung macht -
 beispielsweise Firewalls, Loadbalancer etc., in diesen Fällen wird der FailureHandler plötzlich sehr interessant.
 
 Wie aber kann ich als Entwickler jetzt diese Success- bzw. FailureHandler setzen.
 
 Hierzu schauen wir uns kurz mal die Klasse AbstractDefaultAjaxRequestTarget an.
-[code language="java"]
-	/**
-	 * @return javascript that will run when the ajax call finishes with an error status
-	 */
-	protected CharSequence getFailureScript()
-	{
-		return null;
-	}
 
-	/**
-	 * @return javascript that will run when the ajax call finishes successfully
-	 */
-	protected CharSequence getSuccessScript()
-	{
-		return null;
-	}
+[code language="java"]
+/**
+* @return javascript that will run when the ajax call finishes with an error status
+*/
+protected CharSequence getFailureScript()
+{
+return null;
+}
+
+/**
+* @return javascript that will run when the ajax call finishes successfully
+*/
+protected CharSequence getSuccessScript()
+{
+return null;
+}
 
 [/code]
 
 Das sollte uns jetzt schon bekannt vorkommen.
 Wo wird das aber nun aufgerufen?
 
-Hierzu schaut ihr euch am besten in AbstractDefaultAjaxBehavior mal die Methode 
+Hierzu schaut ihr euch am besten in AbstractDefaultAjaxBehavior mal die Methode
+
 [code language="java"]
 protected CharSequence generateCallbackScript(final CharSequence partialCall)
 [/code]
@@ -285,25 +285,24 @@ Hier implementieren wir noch die zuvor erwähnten Methoden.
 [code language="java"]
 label.add(new AjaxEventBehavior("onclick"){
 
-			@Override
-			protected void onEvent(AjaxRequestTarget target) {
-				target.appendJavaScript("alert('clicked')");
-			}
-		    
-			@Override
-			protected CharSequence getFailureScript() {
-				return "alert('there was a failure!!')";
-			}
-			
-			@Overridearauf 
-			protected CharSequence getSuccessScript() {
-				return "alert('Ajax call was successful')";
-			}
-    	});
+@Override
+protected void onEvent(AjaxRequestTarget target) {
+target.appendJavaScript("alert('clicked')");
+}
+
+@Override
+protected CharSequence getFailureScript() {
+return "alert('there was a failure!!')";
+}
+
+@Overridearauf
+protected CharSequence getSuccessScript() {
+return "alert('Ajax call was successful')";
+}
+});
 [/code]
 
-
-*** TODO succesful ajax call ***
+<a href="http://splitshade.files.wordpress.com/2011/09/successful_ajax_call.png"><img class="aligncenter size-full wp-image-672" title="successful_ajax_call" src="http://splitshade.files.wordpress.com/2011/09/successful_ajax_call.png" alt="" width="575" height="232" /></a>
 
 Das Gleiche versuchen wir jetzt mal mit einem AjaxFehler. Nehmen wir beispielsweise den HTTP-Errorcode 503 (Gateway bzw. Server antwortet nicht).
 Darauf müssen wir in einer Applikation normalerweise reagieren.
@@ -314,11 +313,11 @@ Beispielsweise könnten wir in der onEvent-Methode des AjaxBehaviors einfach ein
 [code language="java"]
 @Overrides
 protected void onEvent(AjaxRequestTarget target) {
-	throw new AbortWithHttpErrorCodeException(503, "I need to check that");
+throw new AbortWithHttpErrorCodeException(503, "I need to check that");
 ]
 [/code]
 
-*** TODO failure ajax call ***
+<a href="http://splitshade.files.wordpress.com/2011/09/http_failure.png"><img class="aligncenter size-full wp-image-673" title="http_failure" src="http://splitshade.files.wordpress.com/2011/09/http_failure.png" alt="" width="575" height="474" /></a>
 
 Mit einer normalen Exception funktion das übrigens nicht, denn das ist kein HTTP-Fehler und wird Serverseitig behandelt und zeigt normalerweise eine ErrorPage oder ähnliches an.
 
@@ -340,102 +339,102 @@ Ungeduldige Kunden fangen dann an, und klicken wild auf der Applikation hin und 
 Denn keine Ajax-Request gehem im Default-Modus verloren, jeder Backend-Call wird abgearbeitet, auch wenn das vielleicht gar nicht mehr notwendig wäre(
 im schlimmsten Fall klickt der Kunde für jedes Akkordion den Aufklappen-Button, der Backend-Call wird abgesetzt, die Daten geladen und das Akkordion blitzt nur kurz auf, weil der Kunde schon 3 Akkordeons weiter ist, das Laden der Daten war also völlig umsonst.)s
 
-
 <h2>Ajax Channels</h2>
 
 Wicket arbeitet per Default im synchronen Ajax-Modus, d.h. alle Ajax-Requests werden gequeued.
 Wie das gemacht wird sieht man am besten wieder, wenn man wieder einen Blick in die Datei wicket-ajax.js wirft.
 
 Hier hab ich für euch die relevanten Sourcen kopiert.
+
 [code language="javascript"]
 /**
- * Channel management
- *
- * Wicket Ajax requests are organized in channels. A channel maintain the order of 
- * requests and determines, what should happen when a request is fired while another 
- * one is being processed. The default behavior (stack) puts the all subsequent requests 
- * in a queue, while the drop behavior limits queue size to one, so only the most
- * recent of subsequent requests is executed.
- * The name of channel determines the policy. E.g. channel with name foochannel|s is 
- * a stack channel, while barchannel|d is a drop channel.
- *
- * The Channel class is supposed to be used through the ChannelManager.
- */
+* Channel management
+*
+* Wicket Ajax requests are organized in channels. A channel maintain the order of
+* requests and determines, what should happen when a request is fired while another
+* one is being processed. The default behavior (stack) puts the all subsequent requests
+* in a queue, while the drop behavior limits queue size to one, so only the most
+* recent of subsequent requests is executed.
+* The name of channel determines the policy. E.g. channel with name foochannel|s is
+* a stack channel, while barchannel|d is a drop channel.
+*
+* The Channel class is supposed to be used through the ChannelManager.
+*/
 Wicket.Channel = Wicket.Class.create();
 Wicket.Channel.prototype = {
-	initialize: function(name) {
-		var res = name.match(/^([^|]+)\|(d|s)$/)
-		if (res == null)
-			this.type ='s'; // default to stack 
-		else
-			this.type = res[2];
-		this.callbacks = new Array();
-		this.busy = false;
-	},	
-	
-	schedule: function(callback) {
-		if (this.busy == false) {
-			this.busy = true;	
-			try {		
-				return callback();
-			} catch (exception) {
-				this.busy = false;
-				Wicket.Log.error("An error occurred while executing Ajax request:" + exception);
-			}
-		} else {
-			Wicket.Log.info("Channel busy - postponing...");
-			if (this.type == 's') // stack 
-				this.callbacks.push(callback);
-			else /* drop */
-				this.callbacks[0] = callback;
-			return null;				
-		}
-	},
-	
-	done: function() {
-		var c = null;
-		
-		if (this.callbacks.length > 0) {
-			c = this.callbacks.shift();
-		}
-			
-		if (c != null && typeof(c) != "undefined") {
-			Wicket.Log.info("Calling postponed function...");
-			// we can't call the callback from this call-stack
-			// therefore we set it on timer event
-			window.setTimeout(c, 1);			
-		} else {
-			this.busy = false;
-		}
-	}
+initialize: function(name) {
+var res = name.match(/^([^|]+)\|(d|s)$/)
+if (res == null)
+this.type ='s'; // default to stack
+else
+this.type = res[2];
+this.callbacks = new Array();
+this.busy = false;
+},
+
+schedule: function(callback) {
+if (this.busy == false) {
+this.busy = true;
+try {
+return callback();
+} catch (exception) {
+this.busy = false;
+Wicket.Log.error("An error occurred while executing Ajax request:" + exception);
+}
+} else {
+Wicket.Log.info("Channel busy - postponing...");
+if (this.type == 's') // stack
+this.callbacks.push(callback);
+else /* drop */
+this.callbacks[0] = callback;
+return null;
+}
+},
+
+done: function() {
+var c = null;
+
+if (this.callbacks.length > 0) {
+c = this.callbacks.shift();
+}
+
+if (c != null && typeof(c) != "undefined") {
+Wicket.Log.info("Calling postponed function...");
+// we can't call the callback from this call-stack
+// therefore we set it on timer event
+window.setTimeout(c, 1);
+} else {
+this.busy = false;
+}
+}
 };
 
 /**
- * Channel manager maintains a map of channels. 
- */
+* Channel manager maintains a map of channels.
+*/
 Wicket.ChannelManager = Wicket.Class.create();
 Wicket.ChannelManager.prototype = {
-	initialize: function() {
-		this.channels = new Array();
-	},
-  
-	// Schedules the callback to channel with given name.
-	schedule: function(channel, callback) {
-		var c = this.channels[channel];
-		if (c == null) {
-			c = new Wicket.Channel(channel);
-			this.channels[channel] = c;
-		}
-		return c.schedule(callback);
-	},
-	
-	// Tells the ChannelManager that the current callback in channel with given name 
-	// has finished processing and another scheduled callback can be executed (if any).
-	done: function(channel) {
-		var c = this.channels[channel];
-		if (c != null)
-			c.done();
-	}
+initialize: function() {
+this.channels = new Array();
+},
+
+// Schedules the callback to channel with given name.
+schedule: function(channel, callback) {
+var c = this.channels[channel];
+if (c == null) {
+c = new Wicket.Channel(channel);
+this.channels[channel] = c;
+}
+return c.schedule(callback);
+},
+
+// Tells the ChannelManager that the current callback in channel with given name
+// has finished processing and another scheduled callback can be executed (if any).
+done: function(channel) {
+var c = this.channels[channel];
+if (c != null)
+c.done();
+}
 };
 
 // Default channel manager instance
@@ -464,7 +463,7 @@ Was aber bedeuten diese Ausdrücke?
 
 Hierzu muss man wissen, dass Wicket zwei Modi unterscheidet, wie Ajax-Requests verarbeitet werden.
 
-<h3>Synchroner Ajax Modus</h3>
+Synchroner / Asynchroner Ajax Modus
 
 Im synchronen (Queue- oder Stack-Modus) werden alle Ajax-Requests in einer oder mehreren Queues gepoolt.
 Die verschiedenen Modi werden durch sogenannte Channels abgebildet.
@@ -472,23 +471,23 @@ Werfen wir hierzu nochmals einen genauen Blick auf die Implementierung eines Aja
 
 [code language="javascript"]
 schedule: function(callback) {
-		if (this.busy == false) {
-			this.busy = true;	
-			try {		
-				return callback();
-			} catch (exception) {
-				this.busy = false;
-				Wicket.Log.error("An error occurred while executing Ajax request:" + exception);
-			}
-		} else {
-			Wicket.Log.info("Channel busy - postponing...");
-			if (this.type == 's') // stack 
-				this.callbacks.push(callback);
-			else /* drop */
-				this.callbacks[0] = callback;
-			return null;				
-		}
-	}
+if (this.busy == false) {
+this.busy = true;
+try {
+return callback();
+} catch (exception) {
+this.busy = false;
+Wicket.Log.error("An error occurred while executing Ajax request:" + exception);
+}
+} else {
+Wicket.Log.info("Channel busy - postponing...");
+if (this.type == 's') // stack
+this.callbacks.push(callback);
+else /* drop */
+this.callbacks[0] = callback;
+return null;
+}
+}
 [/code]
 
 Der erste Teil des if-Blocks ist erst mal uninteressant, denn jeder Ajax-Request wird sofort verarbeitet, wenn nicht gerade ein anderer AjaxRequest aktiv ist.
@@ -499,7 +498,7 @@ Wenn es sich nicht um einen Stack-Channel handelt, dann wird das oberste Element
 
 Jetzt sollte auch langsam klar werden, was es mit den zuvor erwähnten, etwas kryptischen Regular-Expressions auf sich hat.
 
-Channelnames haben entweder die Form 
+Channelnames haben entweder die Form
 
 [code]
 meinAjaxChannel|s
@@ -517,3 +516,144 @@ Wenn wir jetzt das Beispiel von vorhin ein wenig weiterspinnen, wären die AjaxR
 Alle anderen Requests würden einfach verfallen und niemals zum Server geschickt werden.
 
 Bevor wir noch tiefer einsteigen schauen wir und das Ganze am besten an einem Beispiel an.
+
+Hierfür erzeugen wir uns zunächst mal in HomePage.html folgendes Schnipsel:
+
+[code language="html"]
+
+<wicket:container wicket:id="linkList">
+<a href="#" wicket:id="indicatingAjaxLink">
+<span wicket:id="message" />
+</a>
+</wicket:container>
+
+[/code]
+
+Dies ist zum Einen ein WicketContainer, der als Container für einen ListView dient, in diesem sollen 4 AjaxLinks gerendert werden, die ein Laufrad zeigen, sobald der Button betätigt wird.
+
+In die onClick-Methode bauen wir einen TimeOut von sagen wir 5 Sekunden ein, um langlaufende Backend-Transaktionen zu simulieren.
+
+Der Java-Code ist hier:
+
+[code language="java"]
+
+List<String> links = Arrays.asList(new String[] { "Link1", "Link2",
+"Link3", "Link4" });
+ListView<String> listView = new ListView<String>("linkList", links) {
+
+private static final long serialVersionUID = 1L;
+
+@Override
+protected void populateItem(ListItem<String> item) {
+item.add(new IndicatingAjaxLink<Void>("indicatingAjaxLink") {
+
+private static final long serialVersionUID = 1L;
+
+@Override
+public void onClick(AjaxRequestTarget target) {
+try {
+Thread.sleep(5000);
+} catch (InterruptedException e) {
+// TODO Auto-generated catch block
+e.printStackTrace();
+}
+target.appendJavaScript("alert('indicating link clicked')");
+}
+
+}.add(new Label("message", item.getModelObject())));
+}
+};
+
+[/code]
+
+Um es uns möglichst einfach zu machen verwenden wir keine einfachen <strong>AjaxLinks</strong> sondern <strong>IndicatingAjaxLinks</strong>, da diese schon genau das Verhalten simulieren, das wir jetzt brauchen.
+Die IndicatingAjaxLinks blenden ein Laufrad ein, sobald sie geklickt werden. Das ist einfach über ein Behavior gelöst.
+Öffnet man jetzt die Seite und klickt alle Links an, ergibt sich folgendes Bild.
+
+<a href="http://splitshade.files.wordpress.com/2011/09/ajaxlinks1.png"><img class="aligncenter size-full wp-image-678" title="ajaxLinks" src="http://splitshade.files.wordpress.com/2011/09/ajaxlinks1.png" alt="" width="348" height="153" /></a>
+Jeder Link hat einen Timeout von 5 Sekunden in der <em>onClick</em>-Methode definiert.
+Hier sieht man sehr schön die serielle Abarbeitung von AjaxRequests.
+Es sieht zwar so aus, als wären alle Requests bereits abgeschickt, in Wirklichkeit aber
+ist nur der erste Request zum Server geschickt, hier wird der onClick-Handler aufgerufen und
+der Thread pausiert.
+
+Die Ajax-Indikatoren sind per Javascript eingeblendet.
+Sind die ersten 5 Sekunden vorbei, startet der zweite Request, das dauert wieder 5 Sekunden.
+Es dauert also insgesamt 20 Sekunden, bis alle Ajax-Requests abgehandelt sind, da immer nur
+einer zum Server geschickt wird, der Rest landet in der AjaxChannel-Queue des ChannelManagers.
+
+Betrachten wir kurz noch das generierte Javascript der AjaxLinks.
+
+[code language="javascript"]
+if (function(){return Wicket.$('indicatingAjaxLink8') != null;}.bind(this)()) { Wicket.showIncrementally('indicatingAjaxLink8--ajax-indicator');}var wcall=wicketAjaxGet('wicket/page?1-2.IBehaviorListener.1-linkList-1-indicatingAjaxLink',function() { ;Wicket.hideIncrementally('indicatingAjaxLink8--ajax-indicator');}.bind(this),function() { ;Wicket.hideIncrementally('indicatingAjaxLink8--ajax-indicator');}.bind(this), function() {return Wicket.$('indicatingAjaxLink8') != null;}.bind(this));return !wcall;
+[/code]
+
+Das meiste sollte uns bekannt vorkommen.
+Was auffällt, man sieht hier nichts von Channels. Per Default wird kein Channel generiert und
+alle Wicket-Ajax-Funktionalität läuft im Default-Channel,also bereits beim Client
+serialisiert.
+
+Jetzt betrachten wir, die die Situation verbessert werden kann.
+Denn klickt der User auf alle 4 Links kann (muss aber nicht) es besser sein, nur den jeweils
+letzten Request zu verarbeiten.
+
+Um das zu simulieren überschreiben wir einfach das onClick-Ajaxbehavior des Links. Hierzu muss man wissen, jede Komponente kann nur jeweils einen Event-Handler für ein bestimmtes Event haben.
+
+[code language="javascript"]
+
+item.add(new IndicatingAjaxLink<Void>("indicatingAjaxLink") {
+
+private static final long serialVersionUID = 1L;
+
+protected AjaxEventBehavior newAjaxEventBehavior(String event) {
+return new AjaxEventBehavior("onclick"){
+
+@Override
+protected void onEvent(AjaxRequestTarget target) {
+onClick(target);
+}
+
+protected String getChannelName() {
+return "ajaxChannel|d";
+};
+
+};
+};
+
+[/code]
+
+Für uns von Interesse ist hier die Methode <strong>getChannelName()</strong> des AbstractDefaultAjaxBehaviors.
+
+Diese Methode liefert genau eines der zuvor bereits definierten Pattern (<strong>channelName|s</strong> oder <strong>channelName|d</strong> oder <strong>null</strong>was einem |s Channel entspricht).
+
+Da wir einen Drop-Channel verwenden möchten, verwenden wir den ChannelName "<strong>ajaxChannel|d</strong>".
+
+Betrachten wir sofort wieder das generierte Javascript.
+
+[code language="javascript"]
+
+if (function(){return Wicket.$('indicatingAjaxLink6') != null;}.bind(this)()) { Wicket.showIncrementally('indicatingAjaxLink6--ajax-indicator');}var wcall=wicketAjaxGet('wicket/page?0-1.IBehaviorListener.1-linkList-3-indicatingAjaxLink',function() { ;Wicket.hideIncrementally('indicatingAjaxLink6--ajax-indicator');}.bind(this),function() { ;Wicket.hideIncrementally('indicatingAjaxLink6--ajax-indicator');}.bind(this), function() {return Wicket.$('indicatingAjaxLink6') != null;}.bind(this), 'ajaxChannel|d');
+
+[/code]
+
+Ganz am Ende im Skript sieht man, dass der richtige Ajax-Channel generiert wurde.
+
+Wie aber verhält sich die Applikation?
+
+<a href="http://splitshade.files.wordpress.com/2011/09/screenshot-2.png"><img class="aligncenter size-full wp-image-681" title="Screenshot-2" src="http://splitshade.files.wordpress.com/2011/09/screenshot-2.png" alt="" width="352" height="146" /></a>Scheinbar etwas unerwartet, aber nur bis man etwas genauer darüber nachdenkt.
+
+Das Laufrad bei Link1 verschwindet nach 5 Sekunden. Das Laufrad bei Link4 nach weiteren 5 Sekunden. Die Laufräder bei Link2 + Link3 verschwinden überhaupt nicht.
+
+Das macht Sinn.
+<ol>
+	<li>Beim Klick auf Link1 wird der Request abgeschickt und verarbeitet.</li>
+	<li>Der Klick auf Link2 setzt einen neuen Request in die Queue.</li>
+	<li>Der Klick auf Link3 überschreibt den Request von Link2.</li>
+	<li>Der Klick auf Link4 überschreibt den Request von Link3.</li>
+	<li>Ist der Link1-Request verarbeitet, wird sofort der Link4-Request verarbeitet. Die Request von Link2 und Link3 sind verschwunden.</li>
+</ol>
+Das Ausblenden des Laufrads wird aber im Success- bzw. im Fehlerfall ausgeblendet, nicht jedoch wenn der Request gar nicht erst verarbeitet wird. Ein sehr schönes Beispiel.
+
+Übrigens, mit Wicket 1.5.1 wird das Ganze noch schöner, ich habe mich sehr daran gestört, dass man hier mit Strings arbeiten muss. Deshalb hab ich für die AjaxChannels eine kleine Convenience-API bereit gestellt die ab Wicket 1.5.1 verfügbar sein wird. Wer sich das Ganze jetzt schon anschauen möchte, <a href="http://svn.apache.org/viewvc/wicket/trunk/wicket-core/src/main/java/org/apache/wicket/ajax/AjaxChannel.java?view=markup&amp;pathrev=1166210">hier</a> ein kleiner Vorgeschmack.
+
+&nbsp;
