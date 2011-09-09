@@ -237,6 +237,9 @@ successHandler : function() { }.bind(this)
 failureHandler :function() { }.bind(this)
 channel :function() {return Wicket.$('ajaxLink1') != null;}.bind(this));
 [/code]
+
+<h2>Wicket Ajax Success - bzw. FailureHandler</h2>
+
 SuccessHandler ist leer, d.h. es gibt keine bestimmte AKtion, wenn der Ajax-Requets erfolgreich ist.
 
 Das Gleiche gilt für den Failure-Handler, sollte der Ajax Request fehlschlagen, dann schlägt der AjaxRequest eben fehl.
@@ -309,7 +312,7 @@ Das zu simulieren ist natürlich nicht ganz so trivial wie der Succes-Fall, aber
 Beispielsweise könnten wir in der onEvent-Methode des AjaxBehaviors einfach einen HTTP-Fehlercode zurückgeben.
 
 [code language="java"]
-@Override
+@Overrides
 protected void onEvent(AjaxRequestTarget target) {
 	throw new AbortWithHttpErrorCodeException(503, "I need to check that");
 ]
@@ -317,5 +320,200 @@ protected void onEvent(AjaxRequestTarget target) {
 
 *** TODO failure ajax call ***
 
-Mit einer normalen Exception funktioniert das übrigens nicht, denn das ist kein HTTP-Fehler und wird Serverseitig behandelt und zeigt normalerweise eine ErrorPage oder sowas an.
+Mit einer normalen Exception funktion das übrigens nicht, denn das ist kein HTTP-Fehler und wird Serverseitig behandelt und zeigt normalerweise eine ErrorPage oder ähnliches an.
 
+Den letzten Parameter finde ich besonders interessant.
+
+[code language="java"]
+channel :function() {return Wicket.$('ajaxLink1') != null;}.bind(this));
+[/code]
+
+Was sind jetzt AjaxChannels?
+
+Stellen wir uns das Szenario vor, wir haben eine Wicket-Applikation die sehr viel mit Ajax arbeitet.
+Stellen wir uns weiterhin vor, diese Applikation hat viele sogenannte Akkordeon-Module (das sind Module die via Javascript auf- bzw. zugeklappt
+werden können). Das Auf und zuklappen ist jeweils ein eigener Ajax-Call gegen das Backend, weil ja ggf. BackendServices getriggert werden müssen, um
+die Daten in den aufgeklappten Panels anzuzeigen. Ein einfaches Beispiel hierzu wäre die Anzeige von Adressdaten, die mit Hilfe einer Customer-ID vom Backend geladen werden müssen.
+Da die Daten erst geladen werden müssen kann es passieren, dass ein ProgressIndicator etwas länger angezeigt wird.
+Ungeduldige Kunden fangen dann an, und klicken wild auf der Applikation hin und her, öffnen und Schließen Panels und triggern so natürlich unbewusst BackendCalls, die die Applikation noch langsamer machen als sie sowieso schon ist.
+
+Denn keine Ajax-Request gehem im Default-Modus verloren, jeder Backend-Call wird abgearbeitet, auch wenn das vielleicht gar nicht mehr notwendig wäre(
+im schlimmsten Fall klickt der Kunde für jedes Akkordion den Aufklappen-Button, der Backend-Call wird abgesetzt, die Daten geladen und das Akkordion blitzt nur kurz auf, weil der Kunde schon 3 Akkordeons weiter ist, das Laden der Daten war also völlig umsonst.)s
+
+
+<h2>Ajax Channels</h2>
+
+Wicket arbeitet per Default im synchronen Ajax-Modus, d.h. alle Ajax-Requests werden gequeued.
+Wie das gemacht wird sieht man am besten wieder, wenn man wieder einen Blick in die Datei wicket-ajax.js wirft.
+
+Hier hab ich für euch die relevanten Sourcen kopiert.
+[code language="javascript"]
+/**
+ * Channel management
+ *
+ * Wicket Ajax requests are organized in channels. A channel maintain the order of 
+ * requests and determines, what should happen when a request is fired while another 
+ * one is being processed. The default behavior (stack) puts the all subsequent requests 
+ * in a queue, while the drop behavior limits queue size to one, so only the most
+ * recent of subsequent requests is executed.
+ * The name of channel determines the policy. E.g. channel with name foochannel|s is 
+ * a stack channel, while barchannel|d is a drop channel.
+ *
+ * The Channel class is supposed to be used through the ChannelManager.
+ */
+Wicket.Channel = Wicket.Class.create();
+Wicket.Channel.prototype = {
+	initialize: function(name) {
+		var res = name.match(/^([^|]+)\|(d|s)$/)
+		if (res == null)
+			this.type ='s'; // default to stack 
+		else
+			this.type = res[2];
+		this.callbacks = new Array();
+		this.busy = false;
+	},	
+	
+	schedule: function(callback) {
+		if (this.busy == false) {
+			this.busy = true;	
+			try {		
+				return callback();
+			} catch (exception) {
+				this.busy = false;
+				Wicket.Log.error("An error occurred while executing Ajax request:" + exception);
+			}
+		} else {
+			Wicket.Log.info("Channel busy - postponing...");
+			if (this.type == 's') // stack 
+				this.callbacks.push(callback);
+			else /* drop */
+				this.callbacks[0] = callback;
+			return null;				
+		}
+	},
+	
+	done: function() {
+		var c = null;
+		
+		if (this.callbacks.length > 0) {
+			c = this.callbacks.shift();
+		}
+			
+		if (c != null && typeof(c) != "undefined") {
+			Wicket.Log.info("Calling postponed function...");
+			// we can't call the callback from this call-stack
+			// therefore we set it on timer event
+			window.setTimeout(c, 1);			
+		} else {
+			this.busy = false;
+		}
+	}
+};
+
+/**
+ * Channel manager maintains a map of channels. 
+ */
+Wicket.ChannelManager = Wicket.Class.create();
+Wicket.ChannelManager.prototype = {
+	initialize: function() {
+		this.channels = new Array();
+	},
+  
+	// Schedules the callback to channel with given name.
+	schedule: function(channel, callback) {
+		var c = this.channels[channel];
+		if (c == null) {
+			c = new Wicket.Channel(channel);
+			this.channels[channel] = c;
+		}
+		return c.schedule(callback);
+	},
+	
+	// Tells the ChannelManager that the current callback in channel with given name 
+	// has finished processing and another scheduled callback can be executed (if any).
+	done: function(channel) {
+		var c = this.channels[channel];
+		if (c != null)
+			c.done();
+	}
+};
+
+// Default channel manager instance
+Wicket.channelManager = new Wicket.ChannelManager();
+[/code]
+
+Interessant ist zunächst mal die Regular Expression im Initialize-Callback des Ajax-Channels.
+
+[code language="javascript"]
+name.match(/^([^|]+)\|(d|s)$/)
+[/code]
+
+Wie interpretiert man diese Regular Expression jetzt?
+
+Falls euch langweilig ist versucht ihr selber das herauszufinden, für alle anderen gibts direkt hier die Lösung.
+Die Regular-Expression greift für alles, was folgendes Muster hat:
+
+[code language="xml"]
+myAjaxChannel|s
+myAjaxChannel|d
+irgendEinString|s
+irgendEinString|d
+[/code]
+
+Was aber bedeuten diese Ausdrücke?
+
+Hierzu muss man wissen, dass Wicket zwei Modi unterscheidet, wie Ajax-Requests verarbeitet werden.
+
+<h3>Synchroner Ajax Modus</h3>
+
+Im synchronen (Queue- oder Stack-Modus) werden alle Ajax-Requests in einer oder mehreren Queues gepoolt.
+Die verschiedenen Modi werden durch sogenannte Channels abgebildet.
+Werfen wir hierzu nochmals einen genauen Blick auf die Implementierung eines Ajax-Channels und hier speziell die schedule-Routine.
+
+[code language="javascript"]
+schedule: function(callback) {
+		if (this.busy == false) {
+			this.busy = true;	
+			try {		
+				return callback();
+			} catch (exception) {
+				this.busy = false;
+				Wicket.Log.error("An error occurred while executing Ajax request:" + exception);
+			}
+		} else {
+			Wicket.Log.info("Channel busy - postponing...");
+			if (this.type == 's') // stack 
+				this.callbacks.push(callback);
+			else /* drop */
+				this.callbacks[0] = callback;
+			return null;				
+		}
+	}
+[/code]
+
+Der erste Teil des if-Blocks ist erst mal uninteressant, denn jeder Ajax-Request wird sofort verarbeitet, wenn nicht gerade ein anderer AjaxRequest aktiv ist.
+Viel interessanter ist der else-Zweig.
+
+Wenn der Channel-Type 's' ist (S steht für Stackable, es handelt sich also um einen Queue-Channel), wird der Ajax-Call in eine Liste gespeichert.
+Wenn es sich nicht um einen Stack-Channel handelt, dann wird das oberste Element in der Liste ersetzt (in diesem Fall kann sowieso nur ein Element in der Liste sein) und ist quasi der Top-Kandidat als nächster AjaxRequest.
+
+Jetzt sollte auch langsam klar werden, was es mit den zuvor erwähnten, etwas kryptischen Regular-Expressions auf sich hat.
+
+Channelnames haben entweder die Form 
+
+[code]
+meinAjaxChannel|s
+[/code]
+
+oder die Form
+
+[code]
+meinAjaxChannel|d
+[/code]
+
+Über den Character hinter dem |-Symbol unterscheidet Wicket, welche Art Channel für einen bestimmten Ajax-Call verwendet wird.
+
+Wenn wir jetzt das Beispiel von vorhin ein wenig weiterspinnen, wären die AjaxRequests zum Öffnen der Akkordion-Panels nicht Stackable- bzw. Queue-Channels, sondern Drop-Channels, dann würde die Wicket tatsächlich immer nur den letzten Akkordion öffnen und den entsprechenden BackendCall absetzen.
+Alle anderen Requests würden einfach verfallen und niemals zum Server geschickt werden.
+
+Bevor wir noch tiefer einsteigen schauen wir und das Ganze am besten an einem Beispiel an.
