@@ -1,12 +1,16 @@
 package de.md;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.wicket.ajax.AbstractDefaultAjaxBehavior;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.request.http.flow.AbortWithHttpErrorCodeException;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
+import org.eclipse.jetty.http.HttpException;
 
 public class HomePage extends WebPage {
 	private static final long serialVersionUID = 1L;
@@ -26,7 +30,18 @@ public class HomePage extends WebPage {
 
 			@Override
 			protected void onEvent(AjaxRequestTarget target) {
-				target.appendJavaScript("alert('clicked')");
-			}});
+				throw new RuntimeException("I need to check that");
+			}
+		    
+			@Override
+			protected CharSequence getFailureScript() {
+				return "alert('there was a failure!!')";
+			}
+			
+			@Override
+			protected CharSequence getSuccessScript() {
+				return "alert('Ajax call was successful')";
+			}
+    	});
     }
 }
