@@ -212,3 +212,110 @@ wicket/page?0-1.IBehaviorListener.0-ajaxLink
 
 Hiermit wird die PageMap 0 adressiert, in dieser PageMap die Page mit der Version 1. Adressiert wird ein IBehaviorListener, und zwar
 mit der Version 0 das auf der Komponente mit der ID "ajaxLink" liegt.
+Wenn euch genauer interessiert, wie diese URL geparsed wird, könnt ihr beispielsweise die Klasse PageInstanceMapper genauer unter die Lupe
+nehmen.
+
+Das Schema einer URL ist in der Klasse URL definiert (natürlch die in den wicket-packages...)
+
+
+Hier wird beispielsweise auch aus dem String IBehaviorListener die entsprechende Klasse erzeugt, das Mapping hierzu findet ihr in der KLasse
+RequestListenerInterface.
+
+Anschließend wird in der Klasse ListenerInterfaceRequestHandler die eigentliche Requestverarbeitung angestossen.
+
+Ok, aber das könnt ihr alles selber sehen, wenn ihr einfach mal den Debugger anschmeißt und schaut, was passiert. Ich kann das nur empfehlen, ist wirklich hochinteressant.
+
+Ok, lange Rede kurzer Sinn, was Wicket macht, wenn man diese URL aufruft (die man übrigens auch problemlos einfach im Browser aufrufen könnte), es mappt den Request in ein AjaxRequestTarget.
+
+Überhaupt lohnt sich ein etwas genauerer Blick in die Klasse RequestListenerInterface und in die Klasse RequestCycle, da hier viel passiert und man sich relativ schnell ein Verständnis aufbauen kann, wie die Requestverarbeitung in Wicket funktioniert.
+
+Nochmal zur Erinnerung die RequestParameter:
+
+[code language="java"]
+url : wicket/page?0-1.IBehaviorListener.0-ajaxLink
+successHandler : function() { }.bind(this)
+failureHandler :function() { }.bind(this)
+channel :function() {return Wicket.$('ajaxLink1') != null;}.bind(this));
+[/code]
+SuccessHandler ist leer, d.h. es gibt keine bestimmte AKtion, wenn der Ajax-Requets erfolgreich ist.
+
+Das Gleiche gilt für den Failure-Handler, sollte der Ajax Request fehlschlagen, dann schlägt der AjaxRequest eben fehl.
+Ich hatte das Problem schon mehrfach in diversen Projekten, dass die Infrastruktur uns einen Strich durch die Rechnung macht - 
+beispielsweise Firewalls, Loadbalancer etc., in diesen Fällen wird der FailureHandler plötzlich sehr interessant.
+
+Wie aber kann ich als Entwickler jetzt diese Success- bzw. FailureHandler setzen.
+
+Hierzu schauen wir uns kurz mal die Klasse AbstractDefaultAjaxRequestTarget an.
+[code language="java"]
+	/**
+	 * @return javascript that will run when the ajax call finishes with an error status
+	 */
+	protected CharSequence getFailureScript()
+	{
+		return null;
+	}
+
+	/**
+	 * @return javascript that will run when the ajax call finishes successfully
+	 */
+	protected CharSequence getSuccessScript()
+	{
+		return null;
+	}
+
+[/code]
+
+Das sollte uns jetzt schon bekannt vorkommen.
+Wo wird das aber nun aufgerufen?
+
+Hierzu schaut ihr euch am besten in AbstractDefaultAjaxBehavior mal die Methode 
+[code language="java"]
+protected CharSequence generateCallbackScript(final CharSequence partialCall)
+[/code]
+
+an.
+
+Am besten wirds sein, wir implementieren einfach mal den Success- bzw. auch den FailureHandler.
+Wir haben noch das AjaxEventBehavior von vorhin.
+Hier implementieren wir noch die zuvor erwähnten Methoden.
+
+[code language="java"]
+label.add(new AjaxEventBehavior("onclick"){
+
+			@Override
+			protected void onEvent(AjaxRequestTarget target) {
+				target.appendJavaScript("alert('clicked')");
+			}
+		    
+			@Override
+			protected CharSequence getFailureScript() {
+				return "alert('there was a failure!!')";
+			}
+			
+			@Overridearauf 
+			protected CharSequence getSuccessScript() {
+				return "alert('Ajax call was successful')";
+			}
+    	});
+[/code]
+
+
+*** TODO succesful ajax call ***
+
+Das Gleiche versuchen wir jetzt mal mit einem AjaxFehler. Nehmen wir beispielsweise den HTTP-Errorcode 503 (Gateway bzw. Server antwortet nicht).
+Darauf müssen wir in einer Applikation normalerweise reagieren.
+Das zu simulieren ist natürlich nicht ganz so trivial wie der Succes-Fall, aber weit weniger kompliziert, wie erwartet.
+
+Beispielsweise könnten wir in der onEvent-Methode des AjaxBehaviors einfach einen HTTP-Fehlercode zurückgeben.
+
+[code language="java"]
+@Override
+protected void onEvent(AjaxRequestTarget target) {
+	throw new AbortWithHttpErrorCodeException(503, "I need to check that");
+]
+[/code]
+
+*** TODO failure ajax call ***
+
+Mit einer normalen Exception funktioniert das übrigens nicht, denn das ist kein HTTP-Fehler und wird Serverseitig behandelt und zeigt normalerweise eine ErrorPage oder sowas an.
+
