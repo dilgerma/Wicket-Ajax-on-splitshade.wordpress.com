@@ -115,8 +115,6 @@ Folgendes Fragment bauen wir in das Html der Seite ein.
 
 [code language="html"]
 
-<a href="#" wicket:id="ajaxLink"/>
-
 [/code]
 
 Im Java Code das Pendant dazu.
@@ -136,7 +134,7 @@ Die Implementierung spielt momentan keine Rolle, dazu kommen wir später noch. Z
 Hierzu betrachten wir den Quellcode der generierten Webseite.
 
 [code language="java"]
-<a href="<a href="view-source:http://localhost:8080/?0#">#</a>" wicket:id="ajaxLink" id="ajaxLink1" onclick="var wcall=wicketAjaxGet('wicket/page?0-1.IBehaviorListener.0-ajaxLink',function() { }.bind(this),function() { }.bind(this), function() {return Wicket.$('ajaxLink1') != null;}.bind(this));return !wcall;">Click me</a>
+<a id="ajaxLink1" onclick="var wcall=wicketAjaxGet('wicket/page?0-1.IBehaviorListener.0-ajaxLink',function() { }.bind(this),function() { }.bind(this), function() {return Wicket.$('ajaxLink1') != null;}.bind(this));return !wcall;" href="<a href=">Click me</a>
 [/code]
 
 Besonders interessant ist natürlich der onclick-Handler des Links:
@@ -184,7 +182,6 @@ Im folgenden Code-Schnipsel wird das grob veranschaulicht.
 Zunächst definieren wir im Html ein einfaches div-Element zur Anzeige eines Textes.
 
 [code language="html"]
-<div wicket:id="ajaxText"/>
 [/code]
 
 und zusätzlich folgenden Java-Code:
@@ -236,7 +233,7 @@ failureHandler :function() { }.bind(this)
 channel :function() {return Wicket.$('ajaxLink1') != null;}.bind(this));
 [/code]
 
-<h2>Wicket Ajax Success - bzw. FailureHandler</h2>
+Wicket Ajax Success - bzw. FailureHandler
 
 SuccessHandler ist leer, d.h. es gibt keine bestimmte AKtion, wenn der Ajax-Requets erfolgreich ist.
 
@@ -302,8 +299,6 @@ return "alert('Ajax call was successful')";
 });
 [/code]
 
-<a href="http://splitshade.files.wordpress.com/2011/09/successful_ajax_call.png"><img class="aligncenter size-full wp-image-672" title="successful_ajax_call" src="http://splitshade.files.wordpress.com/2011/09/successful_ajax_call.png" alt="" width="575" height="232" /></a>
-
 Das Gleiche versuchen wir jetzt mal mit einem AjaxFehler. Nehmen wir beispielsweise den HTTP-Errorcode 503 (Gateway bzw. Server antwortet nicht).
 Darauf müssen wir in einer Applikation normalerweise reagieren.
 Das zu simulieren ist natürlich nicht ganz so trivial wie der Succes-Fall, aber weit weniger kompliziert, wie erwartet.
@@ -316,8 +311,6 @@ protected void onEvent(AjaxRequestTarget target) {
 throw new AbortWithHttpErrorCodeException(503, "I need to check that");
 ]
 [/code]
-
-<a href="http://splitshade.files.wordpress.com/2011/09/http_failure.png"><img class="aligncenter size-full wp-image-673" title="http_failure" src="http://splitshade.files.wordpress.com/2011/09/http_failure.png" alt="" width="575" height="474" /></a>
 
 Mit einer normalen Exception funktion das übrigens nicht, denn das ist kein HTTP-Fehler und wird Serverseitig behandelt und zeigt normalerweise eine ErrorPage oder ähnliches an.
 
@@ -338,8 +331,7 @@ Ungeduldige Kunden fangen dann an, und klicken wild auf der Applikation hin und 
 
 Denn keine Ajax-Request gehem im Default-Modus verloren, jeder Backend-Call wird abgearbeitet, auch wenn das vielleicht gar nicht mehr notwendig wäre(
 im schlimmsten Fall klickt der Kunde für jedes Akkordion den Aufklappen-Button, der Backend-Call wird abgesetzt, die Daten geladen und das Akkordion blitzt nur kurz auf, weil der Kunde schon 3 Akkordeons weiter ist, das Laden der Daten war also völlig umsonst.)s
-
-<h2>Ajax Channels</h2>
+Ajax Channels
 
 Wicket arbeitet per Default im synchronen Ajax-Modus, d.h. alle Ajax-Requests werden gequeued.
 Wie das gemacht wird sieht man am besten wieder, wenn man wieder einen Blick in die Datei wicket-ajax.js wirft.
@@ -521,11 +513,9 @@ Hierfür erzeugen wir uns zunächst mal in HomePage.html folgendes Schnipsel:
 
 [code language="html"]
 
-<wicket:container wicket:id="linkList">
-<a href="#" wicket:id="indicatingAjaxLink">
-<span wicket:id="message" />
+<a href="#">
+
 </a>
-</wicket:container>
 
 [/code]
 
@@ -537,15 +527,15 @@ Der Java-Code ist hier:
 
 [code language="java"]
 
-List<String> links = Arrays.asList(new String[] { "Link1", "Link2",
+List links = Arrays.asList(new String[] { "Link1", "Link2",
 "Link3", "Link4" });
-ListView<String> listView = new ListView<String>("linkList", links) {
+ListView listView = new ListView("linkList", links) {
 
 private static final long serialVersionUID = 1L;
 
 @Override
-protected void populateItem(ListItem<String> item) {
-item.add(new IndicatingAjaxLink<Void>("indicatingAjaxLink") {
+protected void populateItem(ListItem item) {
+item.add(new IndicatingAjaxLink("indicatingAjaxLink") {
 
 private static final long serialVersionUID = 1L;
 
@@ -566,12 +556,12 @@ target.appendJavaScript("alert('indicating link clicked')");
 
 [/code]
 
-Um es uns möglichst einfach zu machen verwenden wir keine einfachen <strong>AjaxLinks</strong> sondern <strong>IndicatingAjaxLinks</strong>, da diese schon genau das Verhalten simulieren, das wir jetzt brauchen.
+Um es uns möglichst einfach zu machen verwenden wir keine einfachen AjaxLinks sondern IndicatingAjaxLinks, da diese schon genau das Verhalten simulieren, das wir jetzt brauchen.
 Die IndicatingAjaxLinks blenden ein Laufrad ein, sobald sie geklickt werden. Das ist einfach über ein Behavior gelöst.
 Öffnet man jetzt die Seite und klickt alle Links an, ergibt sich folgendes Bild.
 
-<a href="http://splitshade.files.wordpress.com/2011/09/ajaxlinks1.png"><img class="aligncenter size-full wp-image-678" title="ajaxLinks" src="http://splitshade.files.wordpress.com/2011/09/ajaxlinks1.png" alt="" width="348" height="153" /></a>
-Jeder Link hat einen Timeout von 5 Sekunden in der <em>onClick</em>-Methode definiert.
+
+Jeder Link hat einen Timeout von 5 Sekunden in der onClick-Methode definiert.
 Hier sieht man sehr schön die serielle Abarbeitung von AjaxRequests.
 Es sieht zwar so aus, als wären alle Requests bereits abgeschickt, in Wirklichkeit aber
 ist nur der erste Request zum Server geschickt, hier wird der onClick-Handler aufgerufen und
@@ -601,7 +591,7 @@ Um das zu simulieren überschreiben wir einfach das onClick-Ajaxbehavior des Lin
 
 [code language="javascript"]
 
-item.add(new IndicatingAjaxLink<Void>("indicatingAjaxLink") {
+item.add(new IndicatingAjaxLink("indicatingAjaxLink") {
 
 private static final long serialVersionUID = 1L;
 
@@ -622,11 +612,11 @@ return "ajaxChannel|d";
 
 [/code]
 
-Für uns von Interesse ist hier die Methode <strong>getChannelName()</strong> des AbstractDefaultAjaxBehaviors.
+Für uns von Interesse ist hier die Methode getChannelName() des AbstractDefaultAjaxBehaviors.
 
-Diese Methode liefert genau eines der zuvor bereits definierten Pattern (<strong>channelName|s</strong> oder <strong>channelName|d</strong> oder <strong>null</strong>was einem |s Channel entspricht).
+Diese Methode liefert genau eines der zuvor bereits definierten Pattern (channelName|s oder channelName|d oder nullwas einem |s Channel entspricht).
 
-Da wir einen Drop-Channel verwenden möchten, verwenden wir den ChannelName "<strong>ajaxChannel|d</strong>".
+Da wir einen Drop-Channel verwenden möchten, verwenden wir den ChannelName "ajaxChannel|d".
 
 Betrachten wir sofort wieder das generierte Javascript.
 
@@ -640,20 +630,185 @@ Ganz am Ende im Skript sieht man, dass der richtige Ajax-Channel generiert wurde
 
 Wie aber verhält sich die Applikation?
 
-<a href="http://splitshade.files.wordpress.com/2011/09/screenshot-2.png"><img class="aligncenter size-full wp-image-681" title="Screenshot-2" src="http://splitshade.files.wordpress.com/2011/09/screenshot-2.png" alt="" width="352" height="146" /></a>Scheinbar etwas unerwartet, aber nur bis man etwas genauer darüber nachdenkt.
+Scheinbar etwas unerwartet, aber nur bis man etwas genauer darüber nachdenkt.
 
 Das Laufrad bei Link1 verschwindet nach 5 Sekunden. Das Laufrad bei Link4 nach weiteren 5 Sekunden. Die Laufräder bei Link2 + Link3 verschwinden überhaupt nicht.
 
 Das macht Sinn.
-<ol>
-	<li>Beim Klick auf Link1 wird der Request abgeschickt und verarbeitet.</li>
-	<li>Der Klick auf Link2 setzt einen neuen Request in die Queue.</li>
-	<li>Der Klick auf Link3 überschreibt den Request von Link2.</li>
-	<li>Der Klick auf Link4 überschreibt den Request von Link3.</li>
-	<li>Ist der Link1-Request verarbeitet, wird sofort der Link4-Request verarbeitet. Die Request von Link2 und Link3 sind verschwunden.</li>
-</ol>
+
+    Beim Klick auf Link1 wird der Request abgeschickt und verarbeitet.
+    Der Klick auf Link2 setzt einen neuen Request in die Queue.
+    Der Klick auf Link3 überschreibt den Request von Link2.
+    Der Klick auf Link4 überschreibt den Request von Link3.
+    Ist der Link1-Request verarbeitet, wird sofort der Link4-Request verarbeitet. Die Request von Link2 und Link3 sind verschwunden.
+
 Das Ausblenden des Laufrads wird aber im Success- bzw. im Fehlerfall ausgeblendet, nicht jedoch wenn der Request gar nicht erst verarbeitet wird. Ein sehr schönes Beispiel.
 
-Übrigens, mit Wicket 1.5.1 wird das Ganze noch schöner, ich habe mich sehr daran gestört, dass man hier mit Strings arbeiten muss. Deshalb hab ich für die AjaxChannels eine kleine Convenience-API bereit gestellt die ab Wicket 1.5.1 verfügbar sein wird. Wer sich das Ganze jetzt schon anschauen möchte, <a href="http://svn.apache.org/viewvc/wicket/trunk/wicket-core/src/main/java/org/apache/wicket/ajax/AjaxChannel.java?view=markup&amp;pathrev=1166210">hier</a> ein kleiner Vorgeschmack.
+Übrigens, mit Wicket 1.5.1 wird das Ganze noch schöner, ich habe mich sehr daran gestört, dass man hier mit Strings arbeiten muss. Deshalb hab ich für die AjaxChannels eine kleine Convenience-API bereit gestellt die ab Wicket 1.5.1 verfügbar sein wird. Wer sich das Ganze jetzt schon anschauen möchte, hier ein kleiner Vorgeschmack.
+AjaxRequestTarget
 
-&nbsp;
+Was wir jetzt schon einige Male verwendet haben, worauf ich aber noch nicht genauer eingegagen bin ist das AjaxRequestTarget.
+
+Diesen Code kennen wir schon:
+
+[code]
+
+add(new AjaxLink("ajaxLink") {
+@Override
+public void onClick(<strong>AjaxRequestTarget</strong> target) {
+target.appendJavaScript("alert('hello world!');");
+}
+});
+
+[/code]
+
+Quasi in jeder Ajax-Methode bekommen wir vom Framework freundlicherweise den Schlüssel zur Wicket-Ajax-Engine übergeben, und zwar das AjaxRequestTarget.
+
+Was kann ich mit dem AjaxRequestTarget machen?
+
+    Javascript direkt zum Client schicken und zwar nach dem AjaxCall
+    Javascript direkt zum Client schicken und zwar vor dem Call
+    Bestimmte Komponenten neu zeichnen bzw. updaten.
+
+Um Javascript direkt zum Client zu schicken bietet das AjaxRequestTarget die Methoden appendJavascript(String script) bzw. prependJavascript(String script).
+
+Die Funktionsweise ist sprechend, deswegen gehe ich hier nicht näher darauf ein.
+
+Um Komponenten neu zu zeichnen wird die add(Component component)-Methode verwendet. Wicket bietet mit dieser Methode die Möglichkeit, Komponenten in die RenderQeueu zu legen, die dann auf der Clientseite upgedatet werden.
+
+Wichtig! Alle Komponenten die upgedatet werden sollen müssen eine Markup-ID rendern, das geht entweder, indem der Komponente bereits im Html eine id vergeben wird.
+
+[code language="html"]
+[/code]
+
+oder Codeseitig, indem folgendes aufgerufen wird.
+
+[code]
+
+Label label = new Label("text","Anzeigetext")
+label.setOutputMarkupId(true);
+
+[/code]
+
+AjaxLazyLoadPanel
+
+Es gibt die Möglichkeit, Komponenten "Lazy" zu laden. D.h. beim Laden der Komponente wird ein Laufrad eingeblendet, und erst wenn die Komponente fertig geladen ist, wird die Komponente eingeblendet.
+
+Das kann zum Einen verwendet werden, um lang ladenden Komponenten Zeit zu geben, sich fertig zu rendern, oder aber auch um auf Fehler zu reagieren, die bei eventuellen Backend-Calls auftreten können.
+
+Betrachten wir das Ganze ein wenig genauer.
+Die Klasse, die uns diese wunderbare Funktionalität bietet ist das AjaxLazyLoadPanel.
+
+Um das AjaxLazyLoadPanel verwenden zu können müssen wir uns die Wicket-Extensions besorgen.
+Der Maven-Archetype war so freundlich, und diese gleich mit zu generieren, wir müssen sie nur einkommentieren, falls noch nicht geschehen:
+
+[code language="xml"]
+
+    org.apache.wicket
+    wicket-extensions
+    ${wicket.version}
+
+[/code]
+
+für den gradle-build einfach folgende Zeile in die Dependencies mit aufnehmen:
+
+[code language="java"]
+compile  "org.apache.wicket:wicket-extensions:$wicketVersion"
+[/code]
+
+Der relevante Codeteil im LazyLoadPanel ist hier zu sehen:
+
+[code language="java"]
+protected void respond(final AjaxRequestTarget target)
+			{
+				if (state < 2)
+				{
+					Component component =   getLazyLoadComponent( LAZY_LOAD_COMPONENT_ID);
+					AjaxLazyLoadPanel.this.replace(component);
+					setState((byte)2);
+				}
+				target.add(AjaxLazyLoadPanel.this);
+
+			}
+[/code]
+
+Am besten wird sein, wir betrachten das LazyLoadPanel einfach mal in Aktion:
+
+
+Hier der Code dazu:
+
+[code]
+<div wicket:id="lazyLoading"/>
+[/code]
+
+und den Javacode dazu:
+
+[code language="java"]
+protected AjaxLazyLoadPanel lazyLoadingPanel(){
+		return new AjaxLazyLoadPanel("lazyLoading") {
+
+			@Override
+			public Component getLazyLoadComponent(String markupId) {
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return new Label(markupId, "Lazy Loading works!");
+			}
+		};
+	}
+[/code]
+
+Das LazyLoadPanel rendert zunächst den ProgressIndicator, und ändert diesen in die richtige Komponente die von getLazyLoadComponent aufgerufen wird.
+Das schöne ist, hier können wir sogar noch ExceptionHandling einbauen.
+
+Das Problem ist, normalerweise treten Exceptions nicht im Konstruktor der Komponente auf, sondern beim Rendern.
+Beispielsweise treten die meisten Exceptions beim Zugriff auf BackendSysteme auf. Der Zugriff auf diese Systeme erfolgt meistens über LoadableDetachableModels, und zum Zeitpunkt der Exception kann man leider meistens nicht mehr angemessen darauf reagieren.
+
+Das sieht anders aus bei der Verwendung von AjaxLazyLoadPanels, wir simulieren einfach mal eine Komponente, die mit einem Model arbeitet, dass zur Laufzeit eine Exception wirft, also eine echte Real-Life-Problematik.
+
+Folgendes Model verwenden wir hierzu:
+
+[code language="java"]
+public class ExceptinThrowingModel extends LoadableDetachableModel{
+
+	@Override
+	protected Object load() {
+
+		throw new RuntimeException("Error loading Component");
+	}
+
+}
+[/code]
+
+Und bauen uns das Label im LazyLoadPanel folgendermaßen auf:
+
+[code language="java"]
+return new Label(markupId, new ExceptinThrowingModel());
+[/code]
+
+Das Ganze resultiert wie zu erwarten hierin:
+
+Das schöne ist aber, dass wir jetzt die Möglichkeit haben, angemessen darauf zu reagieren, und zwar so:
+
+[code language="java"]
+try {
+					IModel model = new ExceptinThrowingModel();
+					//check the Backend Call
+					model.getObject();
+					return new Label(markupId, model);
+				} catch (Exception e) {
+					return new Label(markupId, "Es ist ein Fehler aufgetreten!");
+				}
+[/code]
+
+Der Code selber gefällt mir nicht besonders, gerade weil wir hier das model.getObject() extra aufrufen müssen um auf eventuelle Fehler zu reagieren, das verursacht natürlich unnötigen Traffic, aber mir ist momentan keine Möglichkeit bekannt, das besser zu machen.
+
+Für Tipps bin ich sehr dankbar.
+
+Ajax Komponenten
+Ajax Behaviors
+Wicket Events
+Wicket & JQuery
