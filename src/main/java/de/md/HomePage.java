@@ -7,12 +7,13 @@ import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.extensions.ajax.markup.html.AjaxLazyLoadPanel;
 import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxLink;
-import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 public class HomePage extends WebPage {
@@ -58,6 +59,7 @@ public class HomePage extends WebPage {
 		 * Indicating Ajax Links
 		 */
 		add(indicatingAjaxLinks());
+		add(lazyLoadingPanel());
 	}
 
 	private Component indicatingAjaxLinks() {
@@ -103,5 +105,28 @@ public class HomePage extends WebPage {
 			}
 		};
 		return listView;
+	}
+	
+	protected AjaxLazyLoadPanel lazyLoadingPanel(){
+		return new AjaxLazyLoadPanel("lazyLoading") {
+			
+			@Override
+			public Component getLazyLoadComponent(String markupId) {
+				try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				try {
+					IModel<String> model = new ExceptinThrowingModel();
+					//check the Backend Call
+					model.getObject();
+					return new Label(markupId, model);
+				} catch (Exception e) {
+					return new Label(markupId, "Es ist ein Fehler aufgetreten!");
+				}
+		}
+		};
 	}
 }
