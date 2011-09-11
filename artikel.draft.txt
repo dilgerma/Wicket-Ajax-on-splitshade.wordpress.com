@@ -809,6 +809,156 @@ Der Code selber gefällt mir nicht besonders, gerade weil wir hier das model.get
 Für Tipps bin ich sehr dankbar.
 
 Ajax Komponenten
+
+Wir haben uns jetzt eine ganze Weile mit den Grundlagen von Wicket & Ajax beschäftigt, wir haben uns angeschaut, wie die Wicket Ajax Engine intern funktioniert.
+
+Wir haben uns die verschiedenen Möglichkeiten angeschaut, wie man Ajax Requests absetzen kann.
+
+Jetzt wird es Zeit, dass wir uns mal ein wenig praktisch anschauen, wie man mit den mitgelieferten Ajax Komponenten arbeiten kann. Wicket und vor allem die Wicket Extensions bringen schon eine Vielzahl an fertigen Ajax Komponenten mit, die aus meiner Sicht sehr gut funktionieren und schon einen Großteil der Anforderungen abdecken, die eine typischen Webanwendung an uns Entwickler stellt.
+
+Um  das Ganze ein wenig praktisch zu betrachten bauen wir uns einfach eine kleine Form auf, und verwenden hierbei soviel Ajax, wie in so einer Form eben hineinpasst.
+
+Hierzu definieren wir uns folgendes Html-Fragment:
+
+[code]
+
+<form wicket:id="form">
+<div wicket:id="fistName"/>
+<input type="submit"/>
+</form>
+
+[/code]
+
+Im Javacode definieren wir uns zunächst mal eine kleines Domain-Model.
+
+[code language="java"]
+
+package de.md.domain;
+
+import java.io.Serializable;
+
+public class Customer implements Serializable {
+
+private String name;
+private String firstName;
+private String email;
+
+    public Customer(){}
+
+public Customer(String name, String firstName, String email) {
+super();
+this.name = name;
+this.firstName = firstName;
+this.email = email;
+}
+public String getName() {
+return name;
+}
+public void setName(String name) {
+this.name = name;
+}
+public String getFirstName() {
+return firstName;
+}
+public void setFirstName(String firstName) {
+this.firstName = firstName;
+}
+public String getEmail() {
+return email;
+}
+public void setEmail(String email) {
+this.email = email;
+}
+
+}
+[/code]
+
+Weiterhin definieren wir uns eine Form.
+
+[code language="java"]
+
+Form<Customer> form = new Form<Customer>("form", new CompoundPropertyModel<Customer>(new Customer("hans","wurst","hans@wurst.de")));
+Label text = new Label("firstName");
+form.add(text);
+return form;
+[/code]
+
+Bis hierhin war das Ganze keine Rocket Science.
+Eine einfache Form, ohne Ajax oder sonstige Besonderheiten.
+
+Mit einem bisschen CSS sieht das Ganze so aus:
+
+Um den Namen jetzt editieren zu können, könnten wir natürlich einfach statt einem Label ein TextField verwenden. Das wäre aber zu einfach. Viel besser wäre es doch, wenn der User auf das Label mit dem Namen klicken könnte und sich dann dynamisch ein TextFeld einblendet.
+
+Natürlich bringt Wicker hierfür schon eine fertige Lösung mit. Das AjaxEditableLabel. Erstaunlicherweise leitet sich die Komponente von Panel ab und nicht von Label. Das liegt daran, weil die Komponente zwei Komponenten darstellen muß. Einmal das Label und im Editiermodus das TextFeld. Das sieht so aus (nachdem man einen Doppelklick auf das Label gemacht hat)
+
+Die Verwendung ist insgesamt recht einfach und sieht im Javacode so aus:
+
+[code language="java"]
+
+Form<Customer> form = new Form<Customer>("form", new CompoundPropertyModel<Customer>(new Customer("hans","wurst","hans.wurst@wuerstle.de")));
+        AjaxEditableLabel<String> text = new AjaxEditableLabel<String>("firstName");
+        text.setRequired(true);
+        form.add(text);
+        return form;
+
+
+[/code]
+
+Was kann man noch machen?
+
+Definieren wir uns beispielsweise die Anrede als Inneres Enum im Customer.
+
+[code language="java"]
+
+public static enum Salutation {
+        HERR,FRAU
+    }
+
+
+[/code]
+
+Wir wollen eine Möglichkeit schaffen ,dass der Kunde seine Anrede ändert.
+
+Hierfür definieren wir uns zuerst mal ein weiteres Element in der Form.
+
+[code]
+
+<form wicket:id="form">
+        Anrede: <div wicket:id="salutation"/>
+        Vorname: <div wicket:id="firstName"/><br/>
+        <input type="submit"/>
+    </form>
+
+
+[/code]
+
+Das Ganze sieht so aus:
+
+Das ist so natürlich nicht ideal, da das Label einfach den name-Wert der SalutationEnum ausgibt. Außerdem kann man bisher noch nichts editieren.
+Beheben wir zunächst das Anzeigeproblem.
+
+Wir könnten beispielsweise einfach ein EnumLabel verwenden.
+
+[code langauge="java"]
+
+EnumLabel<Salutation> salutation = new EnumLabel<Salutation>("salutation");
+
+[/code]
+
+Zusätzlich müssen wir dann aber die Datei HomePage.properties anlegen mit folgenden Werten befüllt.
+
+[code]
+
+Salutation.HERR=Herr
+Salutation.FRAU=Frau
+
+[/code]
+
+Schon ist die Anzeige korrigiert.
+
+DAs aber nur am Rande, viel interessanter wird das Editieren der Anrede.
+
 Ajax Behaviors
 Wicket Events
 Wicket & JQuery
