@@ -7,21 +7,28 @@ import org.apache.wicket.Component;
 import org.apache.wicket.ajax.AjaxEventBehavior;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.extensions.ajax.markup.html.AjaxEditableLabel;
 import org.apache.wicket.extensions.ajax.markup.html.AjaxLazyLoadPanel;
 import org.apache.wicket.extensions.ajax.markup.html.IndicatingAjaxLink;
 import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.markup.html.basic.EnumLabel;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.model.CompoundPropertyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
+
+import de.md.domain.Customer;
+import de.md.domain.Customer.Salutation;
 
 public class HomePage extends WebPage {
 	private static final long serialVersionUID = 1L;
 
 	public HomePage(final PageParameters parameters) {
 		add(new Label("hello", "splitshade.wordpress.com rulez"));
-
+		add(form());
 		/*
 		 * AjaxLink
 		 */
@@ -128,5 +135,16 @@ public class HomePage extends WebPage {
 				}
 		}
 		};
+	}
+	
+	protected Form<Customer> form(){
+		Form<Customer> form = new Form<Customer>("form", new CompoundPropertyModel<Customer>(new Customer("hans","wurst","hans.wurst@wuerstle.de")));
+		AjaxEditableLabel<String> text = new AjaxEditableLabel<String>("firstName");
+		text.setRequired(true);
+		form.add(text);
+		
+		EnumLabel<Salutation> salutation = new EnumLabel<Salutation>("salutation");
+		form.add(salutation);
+		return form;
 	}
 }
