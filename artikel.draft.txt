@@ -897,11 +897,10 @@ Die Verwendung ist insgesamt recht einfach und sieht im Javacode so aus:
 [code language="java"]
 
 Form<Customer> form = new Form<Customer>("form", new CompoundPropertyModel<Customer>(new Customer("hans","wurst","hans.wurst@wuerstle.de")));
-        AjaxEditableLabel<String> text = new AjaxEditableLabel<String>("firstName");
-        text.setRequired(true);
-        form.add(text);
-        return form;
-
+AjaxEditableLabel<String> text = new AjaxEditableLabel<String>("firstName");
+text.setRequired(true);
+form.add(text);
+return form;
 
 [/code]
 
@@ -912,9 +911,8 @@ Definieren wir uns beispielsweise die Anrede als Inneres Enum im Customer.
 [code language="java"]
 
 public static enum Salutation {
-        HERR,FRAU
-    }
-
+HERR,FRAU
+}
 
 [/code]
 
@@ -925,11 +923,10 @@ Hierfür definieren wir uns zuerst mal ein weiteres Element in der Form.
 [code]
 
 <form wicket:id="form">
-        Anrede: <div wicket:id="salutation"/>
-        Vorname: <div wicket:id="firstName"/><br/>
-        <input type="submit"/>
-    </form>
-
+Anrede: <div wicket:id="salutation"/>
+Vorname: <div wicket:id="firstName"/><br/>
+<input type="submit"/>
+</form>
 
 [/code]
 
@@ -958,7 +955,6 @@ Salutation.FRAU=Frau
 Schon ist die Anzeige korrigiert.
 
 DAs aber nur am Rande, viel interessanter wird das Editieren der Anrede.
-
 Ajax Behaviors
 Wicket Events
 Wicket & JQuery
