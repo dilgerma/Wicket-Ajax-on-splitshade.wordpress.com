@@ -8,9 +8,18 @@
 	rel='stylesheet' type='text/css' />
 <link rel="stylesheet" href="style.css" type="text/css" media="screen"
 	title="Stylesheet" />
+	<script type="text/javascript" src="jquery-1.6.4.min.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			$('.headline').click(function(){
+				$(this).fadeOut();
+			})
+		})
+	</script>
+	
 </head>
 <body>
-	<h1 wicket:id="hello"></h1>
+	<h1 class="headline" wicket:id="hello"></h1>
 	<a href="#" wicket:id="ajaxLink">Click me</a>
 	<div wicket:id="ajaxText" />
 	
