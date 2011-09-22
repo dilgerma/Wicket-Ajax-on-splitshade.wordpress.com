@@ -8,7 +8,11 @@
 	rel='stylesheet' type='text/css' />
 <link rel="stylesheet" href="style.css" type="text/css" media="screen"
 	title="Stylesheet" />
-	<script type="text/javascript" src="jquery-1.6.4.min.js"></script>
+	<style type="text/css">
+		.blackBeauty{display:none;position:absolute; right: 0px; top: 0px;width:150px; height:150px; background:black;color: red}
+	</style>
+</head>
+<body>
 	<script type="text/javascript">
 		$(document).ready(function(){
 			$('.headline').click(function(){
@@ -16,9 +20,6 @@
 			})
 		})
 	</script>
-	
-</head>
-<body>
 	<h1 class="headline" wicket:id="hello"></h1>
 	<a href="#" wicket:id="ajaxLink">Click me</a>
 	<div wicket:id="ajaxText" />
@@ -39,5 +40,11 @@
 		<input type="submit"/>
 	</form>
 	</div>
+	
+	<div class="blackBeauty">
+	Click Me
+	</div>
+	
+	<div wicket:id="clickMe"/>
 </body>
 </html>

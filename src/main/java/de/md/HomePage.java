@@ -22,11 +22,14 @@ import org.apache.wicket.request.mapper.parameter.PageParameters;
 
 import de.md.domain.Customer;
 import de.md.domain.Customer.Salutation;
+import de.md.jquery.FadeInBehavior;
+import de.md.jquery.JQueryBehavior;
 
 public class HomePage extends WebPage {
 	private static final long serialVersionUID = 1L;
 
 	public HomePage(final PageParameters parameters) {
+		add(new JQueryBehavior());
 		add(new Label("hello", "splitshade.wordpress.com rulez"));
 		add(form());
 		/*
@@ -67,6 +70,10 @@ public class HomePage extends WebPage {
 		 */
 		add(indicatingAjaxLinks());
 		add(lazyLoadingPanel());
+		Label click = new Label("clickMe", "Click Me");
+		add(click);
+		click.setOutputMarkupId(true);
+		click.add(new FadeInBehavior("onclick"));
 	}
 
 	private Component indicatingAjaxLinks() {
